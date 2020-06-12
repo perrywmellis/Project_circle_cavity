@@ -8,40 +8,39 @@ Created on Tue Jun  9 15:48:13 2020
 
 # problems : wall is not intirely symetric 
 #           periodical BC ?
-#           fluid velocity must be quicker when the width is smaller (a little bit the case)
-#           wall BC seems to be still working   
-#           R is the radius or the diametre ? pb when R different from 1 and when we change ymax
-#           velocity still = 0 at xmin and xmax 
+#           fluid velocity must be quicker when the width is smaller
+#           b = -inf ?? 
 
 import numpy
 from matplotlib import pyplot, cm
 from mpl_toolkits.mplot3d import Axes3D
 
 
+
 def build_up_b(rho, dt, dx, dy, u, v):
-    b = numpy.zeros_like(u)
-    b[1:-1, 1:-1] = (rho * (1 / dt * ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx) + \
-                                      (v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy)) - \
-                            ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx))**2 - \
-                            2 * ((u[2:, 1:-1] - u[0:-2, 1:-1]) / (2 * dy) * \
-                                 (v[1:-1, 2:] - v[1:-1, 0:-2]) / (2 * dx))- \
-                            ((v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy))**2)) \
+    b = numpy.empty_like(u)
+    b[1:-1, 1:-1] = (rho * (1 / dt * ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx) + 
+                                      (v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy)) - 
+                            ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx))**2 - 
+                            2 * ((u[2:, 1:-1] - u[0:-2, 1:-1]) / (2 * dy) * 
+                                 (v[1:-1, 2:] - v[1:-1, 0:-2]) / (2 * dx))- 
+                            ((v[2:, 1:-1] - v[0:-2, 1:-1]) / (2 * dy))**2)) 
     
     # # Periodic BC Pressure @ x = xmax
     # b[1:-1, -1] = (rho * (1 / dt * ((u[1:-1, 0] - u[1:-1,-2]) / (2 * dx) + \
     #                                 (v[2:, -1] - v[0:-2, -1]) / (2 * dy)) - \
     #                       ((u[1:-1, 0] - u[1:-1, -2]) / (2 * dx))**2 - \
     #                       2 * ((u[2:, -1] - u[0:-2, -1]) / (2 * dy) * \
-    #                            (v[1:-1, 0] - v[1:-1, -2]) / (2 * dx)) - \
+    #                             (v[1:-1, 0] - v[1:-1, -2]) / (2 * dx)) - \
     #                       ((v[2:, -1] - v[0:-2, -1]) / (2 * dy))**2)) \
 
     # # Periodic BC Pressure @ x = xmin
     # b[1:-1, 0] = (rho * (1 / dt * ((u[1:-1, 1] - u[1:-1, -1]) / (2 * dx) + \
-    #                                (v[2:, 0] - v[0:-2, 0]) / (2 * dy)) - \
-    #                      ((u[1:-1, 1] - u[1:-1, -1]) / (2 * dx))**2 - \
-    #                      2 * ((u[2:, 0] - u[0:-2, 0]) / (2 * dy) * \
+    #                                 (v[2:, 0] - v[0:-2, 0]) / (2 * dy)) - \
+    #                       ((u[1:-1, 1] - u[1:-1, -1]) / (2 * dx))**2 - \
+    #                       2 * ((u[2:, 0] - u[0:-2, 0]) / (2 * dy) * \
     #                           (v[1:-1, 1] - v[1:-1, -1]) / (2 * dx))- \
-    #                      ((v[2:, 0] - v[0:-2, 0]) / (2 * dy))**2)) \
+    #                       ((v[2:, 0] - v[0:-2, 0]) / (2 * dy))**2)) \
     
     return( b)
 
@@ -89,29 +88,30 @@ def BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n): # The fonction input =0 at the wall, an
             u[int((numpy.sqrt(R**2 - (i*dy - ya )**2 ) + xa)/dx) : ,int(i) ] = 0
             i = i + 1 
             
-    for q in range(n - 1 ): #bottom circular boundaries
-                
-        xa = xmin + R 
-        ya = (2*q + 1) * (ymin + R ) 
-        while j < (ymin + 2 * (q + 1) * R) / dy:
-            u[: int(( - numpy.sqrt(R**2 - (j*dy - ya )**2 ) + xa)/dx) + 1, int(j) ] = 0
+    for q in range(n): #bottom circular boundaries               
+        ya = ymin + R 
+        xa = (2*q + 1) * R + xmin 
+        while j < (xmin + 2 * (q + 1) * R) / dx:
+            u[: int(( - numpy.sqrt(R**2 - (j*dx - xa )**2 ) + ya)/dy) + 1, int(j) ] = 0
             j = j + 1 
             
+    u[ int((ymax-R)/dy) : , -1] = 0 
+    u[: int((ymin+R)/dy) , -1] = 0 
     return(u)
 
 
 ##variable declarations
-nx = 100
-ny = 100
+nx = 30
+ny = 30
 nt = 10
 nit = 50 
 c = 1
 n= 4 # number of half circle
-R = 1# radius of the curve of the wall 
+R = 1 # radius of the curve of the wall 
 xmin = 0
 xmax = n*2*R
 ymin =0 
-ymax = 6
+ymax = 7
 dx = (xmax - xmin ) / (nx - 1)
 dy = (ymax - ymin) / (ny - 1)
 x = numpy.linspace(xmin, xmax, nx)
@@ -124,7 +124,7 @@ nu = .1
 F = 1
 dt = .01
 
-#initial conditions
+#initial conditions 
 u = numpy.zeros((ny, nx))
 un = numpy.zeros((ny, nx))
 
