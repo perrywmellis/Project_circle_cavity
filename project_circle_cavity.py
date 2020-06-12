@@ -8,8 +8,7 @@ Created on Tue Jun  9 15:48:13 2020
 
 # problems : wall is not intirely symetric 
 #           periodical BC ?
-#           fluid velocity must be quicker when the width is smaller
-#           b = -inf ?? 
+#           BC de la dérivée 
 
 import numpy
 from matplotlib import pyplot, cm
@@ -80,12 +79,11 @@ def BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n): # The fonction input =0 at the wall, an
     j=0
 
     
-    for q in range(n - 1): #top circular boundaries
-
-        xa = xmax - R
-        ya = (2*q + 1) * (ymin + R ) 
-        while i < (ymin + 2 * (q + 1) * R) / dy:
-            u[int((numpy.sqrt(R**2 - (i*dy - ya )**2 ) + xa)/dx) : ,int(i) ] = 0
+    for q in range(n): #top circular boundaries
+        ya = ymax - R
+        xa = (2*q + 1) *  R + xmin 
+        while i < (xmin + 2 * (q +1) * R) / dx :
+            u[int((numpy.sqrt(R**2 - (i*dx - xa )**2 ) + ya)/dy) : ,int(i) ] = 0
             i = i + 1 
             
     for q in range(n): #bottom circular boundaries               
@@ -101,13 +99,13 @@ def BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n): # The fonction input =0 at the wall, an
 
 
 ##variable declarations
-nx = 30
-ny = 30
+nx = 50
+ny = 50
 nt = 10
 nit = 50 
 c = 1
-n= 4 # number of half circle
-R = 1 # radius of the curve of the wall 
+n= 3 # number of half circle
+R = 3 # radius of the curve of the wall 
 xmin = 0
 xmax = n*2*R
 ymin =0 
@@ -139,10 +137,9 @@ b = numpy.zeros((ny, nx))
 udiff = 1
 stepcount = 0
 
-while udiff > .001:
+while udiff > .05:
     un = u.copy()
     vn = v.copy()
-
     b = build_up_b(rho, dt, dx, dy, u, v)
     p = pressure_poisson_periodic(p, dx, dy)
 
@@ -239,14 +236,14 @@ pyplot.quiver(X[::3, ::3], Y[::3, ::3], u[::3, ::3], v[::3, ::3]);
 fig = pyplot.figure(figsize = (11,7), dpi=100)
 pyplot.quiver(X, Y, u, v);
 
-# fig = pyplot.figure(figsize=(12,6), dpi=100)
-# fig.add_subplot(111,aspect='equal')
-# pyplot.fill(x,y,fill=False,lw=3)
-# pyplot.contourf(X,Y,p,15,alpha=0.5)
-# pyplot.colorbar()
-# pyplot.quiver(X,Y,u,v)
-# pyplot.title('Velocity & pressure through constriction')
-# pyplot.show()
+fig = pyplot.figure(figsize=(12,6), dpi=100)
+fig.add_subplot(111,aspect='equal')
+pyplot.fill(x,y,fill=False,lw=3)
+pyplot.contourf(X,Y,p,15,alpha=0.5)
+pyplot.colorbar()
+pyplot.quiver(X,Y,u,v)
+pyplot.title('Velocity & pressure through constriction')
+pyplot.show()
 
 #%% Test BC
 
@@ -258,3 +255,7 @@ v = BC(v,R,ymax,ymin,xmax,xmin,dx,dy,n)
 
 fig = pyplot.figure(figsize = (11,7), dpi=100)
 pyplot.quiver(X, Y, u, v);
+
+#%% Test 
+m = [0,1,2,4]
+
