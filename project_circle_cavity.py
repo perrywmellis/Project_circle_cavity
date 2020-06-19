@@ -52,6 +52,8 @@ def pressure_poisson_periodic(p, dx, dy):
                           (pn[2:, 1:-1] + pn[0:-2, 1:-1]) * dx**2) /
                          (2 * (dx**2 + dy**2)) -
                          dx**2 * dy**2 / (2 * (dx**2 + dy**2)) * b[1:-1, 1:-1])
+        p =  BC(i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x,p) 
+        
 
         # # Periodic BC Pressure @ x = xmax
         # p[1:-1, -1] = (((pn[1:-1, 0] + pn[1:-1, -2])* dy**2 +
@@ -74,11 +76,41 @@ def pressure_poisson_periodic(p, dx, dy):
      
     return p
 
-def BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n): # The fonction input =0 at the wall, and outside 
-    i=0
-    j=0
-
+def geometry (A ,lamb,ymax,ymin):
     
+    x_list = x.copy()
+    y_list_top = A * numpy.sin(numpy.pi * x_list / lamb) + (ymax - A)
+    y_list_bottom = A * numpy.sin(numpy.pi * x_list / lamb + numpy.pi) + (ymin + A)
+        
+    for n in range(nx - 1):
+        i_list[n] = int(x_list[n]/dx)
+        j_list_top[n] = int(y_list_top[n]/dy)
+        j_list_bottom[n]= int(y_list_bottom[n]/dy)
+        
+    #segment lenght       
+    l_top = numpy.sqrt((x_list[1:]-x_list[:-1])**2 + (y_list_top[1:]-y_list_top[:-1])**2)
+    l_bottom = numpy.sqrt((x_list[1:]-x_list[:-1])**2 + (y_list_bottom[1:]-y_list_bottom[:-1])**2)
+
+        
+    #normal vectors 
+    n_x = (x_list[:-1] - x_list[1:])/l_top
+    n_y_top = (y_list_top[:-1] - y_list_top[1:])/l_top
+    n_y_bottom = (y_list_bottom[:-1] - y_list_bottom[1:])/l_bottom
+    
+    return x_list,y_list_top,y_list_bottom,i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x
+        
+def BC(i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x,u): # The fonction input =0 at the wall, and outside 
+    un = numpy.empty_like(u)
+    
+    for q in range(nx-1):
+        un = u.copy()
+        #print(q)
+        u[int(j_list_top[q]):,int(i_list[q])] = 0 
+        u[:int(j_list_bottom[q]),int(i_list[q])] = 0 
+        #u[int(j_list_top[q])   ,int(i_list[q])] = 1/((1/n_x) + (1/n_y_top))    * ((1/n_x*un[int(j_list_top[q]),   int(i_list[q])-1 ]) + (1/n_y_top   *un[int(j_list_top[q]-1),int(i_list[q])]))
+        #u[int(j_list_bottom[q]),int(i_list[q])] = 1/((1/n_x) + (1/n_y_bottom)) * ((1/n_x*un[int(j_list_bottom[q]),int(i_list[q])-1 ]) + (1/n_y_bottom*un[int(j_list_top[q] - 1),int(i_list[q])]))                                                                   
+    
+<<<<<<< Updated upstream
     for q in range(n): #top circular boundaries
         ya = ymax - R
         xa = (2*q + 1) *  R + xmin 
@@ -95,6 +127,8 @@ def BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n): # The fonction input =0 at the wall, an
             
     u[ int((ymax-R)/dy) : , -1] = 0 
     u[: int((ymin+R)/dy) , -1] = 0 
+=======
+>>>>>>> Stashed changes
     return(u)
 
 
@@ -115,6 +149,8 @@ dy = (ymax - ymin) / (ny - 1)
 x = numpy.linspace(xmin, xmax, nx)
 y = numpy.linspace(ymin, ymax, ny)
 X, Y = numpy.meshgrid(x, y)
+A = 1 # sinusoidal amplitude of the wall
+lamb = 2 # wavelenght of sinusoidal wall 
 
 ##physical variables
 rho = 1
@@ -133,6 +169,10 @@ p = numpy.ones((ny, nx))
 pn = numpy.ones((ny, nx))
 
 b = numpy.zeros((ny, nx))
+
+i_list = numpy.zeros(nx)
+j_list_top = numpy.zeros(ny)
+j_list_bottom = numpy.zeros(ny)
 
 udiff = 1
 stepcount = 0
@@ -224,8 +264,9 @@ while udiff > .05:
     # v[-1, :]=0
     
     # Circular boundary condition
-    u = BC(u,R,ymax,ymin,xmax,xmin,dx,dy,n) 
-    v = BC(v,R,ymax,ymin,xmax,xmin,dx,dy,n) 
+    x_list,y_list_top,y_list_bottom,i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x = geometry (A ,lamb,ymax,ymin)
+    u =  BC(i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x,u) 
+    v =  BC(i_list,j_list_top,j_list_bottom,n_y_bottom, n_y_top,n_x,v)
     
     udiff = (numpy.sum(u) - numpy.sum(un)) / numpy.sum(u)
     stepcount += 1
@@ -257,5 +298,11 @@ fig = pyplot.figure(figsize = (11,7), dpi=100)
 pyplot.quiver(X, Y, u, v);
 
 #%% Test 
+<<<<<<< Updated upstream
 m = [0,1,2,4]
+=======
+
+u = numpy.linspace(1, 3, 3)
+u[int(2.0)]
+>>>>>>> Stashed changes
 
